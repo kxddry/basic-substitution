@@ -1,0 +1,51 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Basic Substitution Decryptor</title>
+    <link rel="stylesheet" href="./styles.css">
+  </head>
+  <body>
+    <main class="app">
+      <header class="header">
+        <h1>Basic Substitution Decryptor</h1>
+        <p class="sub">Type or paste your ciphertext, then enter guesses under each letter.</p>
+      </header>
+
+      <section class="input-section">
+        <label for="ciphertext" class="label">Ciphertext</label>
+        <textarea id="ciphertext" class="ciphertext" rows="4" placeholder="Example: HELLO WORLD"></textarea>
+        <div class="controls">
+          <button id="clearMapping" type="button" class="btn">Clear mapping</button>
+        </div>
+      </section>
+
+      <section class="display-section">
+        <div class="row">
+          <div class="row-title">1) Original sentence</div>
+          <pre id="originalDisplay" class="mono block"></pre>
+        </div>
+
+        <div class="row">
+          <div class="row-title">Enter letters under each character</div>
+          <div id="grid" class="grid" aria-live="polite" aria-label="Per-character entry grid"></div>
+        </div>
+
+        <div class="row">
+          <div class="row-title">2) Sentence with current letters applied</div>
+          <pre id="decryptedSentence" class="mono block"></pre>
+        </div>
+
+        <div class="row">
+          <div class="row-title">3) Letters applied with spaces</div>
+          <pre id="spacedGuess" class="mono block"></pre>
+        </div>
+      </section>
+    </main>
+
+    <script defer src="./app.js"></script>
+  </body>
+  </html>
+
+

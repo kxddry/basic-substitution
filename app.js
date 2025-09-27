@@ -57,6 +57,20 @@
     return out;
   }
 
+  function underscoredVersion(text, mapping) {
+    let out = "";
+    for (let i = 0; i < text.length; i += 1) {
+      const ch = text[i];
+      if (isLetter(ch)) {
+        const mapped = mapping[ch];
+        out += mapped && mapped.length === 1 ? mapped : "_";
+      } else {
+        out += ch; // preserve spaces, punctuation, newlines
+      }
+    }
+    return out;
+  }
+
   function updateOutputs() {
     const applied = applyMapping(state.ciphertext, state.mapping);
 
@@ -85,7 +99,7 @@
     }
     els.decrypted.replaceChildren(frag);
 
-    els.spaced.textContent = spacedVersion(applied, state.ciphertext);
+    els.spaced.textContent = underscoredVersion(state.ciphertext, state.mapping);
   }
 
   function clearMapping() {

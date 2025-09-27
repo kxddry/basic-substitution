@@ -163,7 +163,12 @@
         counts.set(ch, (counts.get(ch) || 0) + 1);
       }
     }
-    const letters = Array.from(counts.keys()).sort((a, b) => a.localeCompare(b));
+    const letters = Array.from(counts.keys()).sort((a, b) => {
+      const cb = counts.get(b) || 0;
+      const ca = counts.get(a) || 0;
+      if (cb !== ca) return cb - ca; // descending by count (i.e., percentage)
+      return a.localeCompare(b);
+    });
     const frag = document.createDocumentFragment();
     const makeRow = (cols, header = false) => {
       const row = document.createElement("div");

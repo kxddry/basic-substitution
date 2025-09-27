@@ -18,7 +18,7 @@
   };
 
   function isLetter(ch) {
-    return /^[A-Z]|[А-Я]$/.test(ch);
+    return /^[A-ZА-Я]$/.test(ch);
   }
 
   function normalizeCiphertext(raw) {

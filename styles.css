@@ -170,4 +170,11 @@ body {
   color: var(--danger);
 }
 
+.hl {
+  background: #ffe36e;
+  color: #0b0d10;
+  padding: 0 2px;
+  border-radius: 4px;
+}
+
 

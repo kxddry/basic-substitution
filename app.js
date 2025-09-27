@@ -33,7 +33,7 @@
       const ch = text[i];
       if (isLetter(ch)) {
         const mapped = mapping[ch];
-        out += mapped && mapped.length === 1 ? mapped : UNKNOWN_CHAR;
+        out += mapped && mapped.length === 1 ? mapped : ch; // show original letter if unmapped
       } else {
         out += ch; // preserve spaces, punctuation, newlines
       }
@@ -59,7 +59,32 @@
 
   function updateOutputs() {
     const applied = applyMapping(state.ciphertext, state.mapping);
-    els.decrypted.textContent = applied;
+
+    // Render decrypted with highlights for mapped letters
+    const frag = document.createDocumentFragment();
+    for (let i = 0; i < state.ciphertext.length; i += 1) {
+      const cipherCh = state.ciphertext[i];
+      const outCh = applied[i];
+      if (cipherCh === "\n") {
+        frag.appendChild(document.createTextNode("\n"));
+        continue;
+      }
+      if (!isLetter(cipherCh)) {
+        frag.appendChild(document.createTextNode(cipherCh));
+        continue;
+      }
+      const isMapped = state.mapping[cipherCh] && state.mapping[cipherCh].length === 1;
+      if (isMapped) {
+        const span = document.createElement("span");
+        span.className = "hl";
+        span.textContent = outCh;
+        frag.appendChild(span);
+      } else {
+        frag.appendChild(document.createTextNode(outCh));
+      }
+    }
+    els.decrypted.replaceChildren(frag);
+
     els.spaced.textContent = spacedVersion(applied, state.ciphertext);
   }
 

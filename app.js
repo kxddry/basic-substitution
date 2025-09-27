@@ -10,11 +10,13 @@
     decrypted: /** @type {HTMLElement} */ (document.getElementById("decryptedSentence")),
     spaced: /** @type {HTMLElement} */ (document.getElementById("spacedGuess")),
     clearBtn: /** @type {HTMLButtonElement} */ (document.getElementById("clearMapping")),
+    injectiveToggle: /** @type {HTMLInputElement} */ (document.getElementById("injectiveToggle")),
   };
 
   const state = {
     ciphertext: "",
     mapping: /** @type {Record<string, string>} */ ({}), // cipher letter (A-Z) -> plain letter (A-Z)
+    disallowNonInjective: false,
   };
 
   function isLetter(ch) {
@@ -69,6 +71,42 @@
       }
     }
     return out;
+  }
+
+  function enforceInjectivityFor(preferredKey) {
+    if (!state.disallowNonInjective) return;
+    const ownerForPlain = new Map(); // plain -> cipher
+    const toDelete = [];
+    for (const [cipher, plain] of Object.entries(state.mapping)) {
+      if (!plain) continue;
+      const existing = ownerForPlain.get(plain);
+      if (!existing) {
+        ownerForPlain.set(plain, cipher);
+        continue;
+      }
+      // conflict
+      let keep = existing;
+      let remove = cipher;
+      if (preferredKey && (cipher === preferredKey || existing === preferredKey)) {
+        keep = preferredKey;
+        remove = cipher === preferredKey ? existing : cipher;
+      }
+      if (remove) toDelete.push(remove);
+      ownerForPlain.set(plain, keep);
+    }
+    for (const c of toDelete) delete state.mapping[c];
+    // Sync inputs for deleted mappings
+    for (const c of toDelete) {
+      els.grid.querySelectorAll(`input.plain-input[data-key="${c}"]`).forEach((inp) => {
+        inp.value = "";
+      });
+    }
+    // Ensure kept inputs show correct value
+    for (const [cipher, plain] of Object.entries(state.mapping)) {
+      els.grid.querySelectorAll(`input.plain-input[data-key="${cipher}"]`).forEach((inp) => {
+        if (inp.value !== plain) inp.value = plain;
+      });
+    }
   }
 
   function updateOutputs() {
@@ -149,6 +187,9 @@
       if (!key) return;
 
       if (val) state.mapping[key] = val; else delete state.mapping[key];
+
+      // If injectivity is required, clear conflicts, preferring the key just set
+      enforceInjectivityFor(key);
 
       // Sync all inputs for the same cipher letter
       els.grid.querySelectorAll(`input.plain-input[data-key="${key}"]`).forEach((inp) => {
@@ -262,6 +303,15 @@
   els.clearBtn.addEventListener("click", () => {
     clearMapping();
   });
+
+  if (els.injectiveToggle) {
+    els.injectiveToggle.addEventListener("change", () => {
+      state.disallowNonInjective = !!els.injectiveToggle.checked;
+      // On enabling, immediately enforce uniqueness across existing mapping
+      if (state.disallowNonInjective) enforceInjectivityFor(undefined);
+      updateOutputs();
+    });
+  }
 
   // Initialize with placeholder example for discoverability (does not modify textarea value)
   setCiphertext("");

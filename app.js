@@ -11,12 +11,16 @@
     spaced: /** @type {HTMLElement} */ (document.getElementById("spacedGuess")),
     clearBtn: /** @type {HTMLButtonElement} */ (document.getElementById("clearMapping")),
     injectiveToggle: /** @type {HTMLInputElement} */ (document.getElementById("injectiveToggle")),
+    freqToggle: /** @type {HTMLInputElement} */ (document.getElementById("freqToggle")),
+    freqRow: /** @type {HTMLElement} */ (document.getElementById("freqRow")),
+    freqTable: /** @type {HTMLElement} */ (document.getElementById("freqTable")),
   };
 
   const state = {
     ciphertext: "",
     mapping: /** @type {Record<string, string>} */ ({}), // cipher letter (A-Z) -> plain letter (A-Z)
     disallowNonInjective: false,
+    showFrequency: false,
   };
 
   function isLetter(ch) {
@@ -138,6 +142,54 @@
     els.decrypted.replaceChildren(frag);
 
     els.spaced.textContent = underscoredVersion(state.ciphertext, state.mapping);
+
+    // Frequency table
+    if (state.showFrequency) {
+      renderFrequency(state.ciphertext);
+      if (els.freqRow) els.freqRow.style.display = "block";
+    } else {
+      if (els.freqRow) els.freqRow.style.display = "none";
+    }
+  }
+
+  function renderFrequency(text) {
+    if (!els.freqTable) return;
+    const counts = new Map();
+    let totalLetters = 0;
+    for (let i = 0; i < text.length; i += 1) {
+      const ch = text[i];
+      if (isLetter(ch)) {
+        totalLetters += 1;
+        counts.set(ch, (counts.get(ch) || 0) + 1);
+      }
+    }
+    const letters = Array.from(counts.keys()).sort((a, b) => a.localeCompare(b));
+    const frag = document.createDocumentFragment();
+    const makeRow = (cols, header = false) => {
+      const row = document.createElement("div");
+      row.style.display = "grid";
+      row.style.gridTemplateColumns = "repeat(3, minmax(0, 1fr))";
+      row.style.gap = "8px";
+      row.style.padding = "4px 0";
+      cols.forEach((c) => {
+        const cell = document.createElement("div");
+        cell.textContent = c;
+        if (header) {
+          cell.style.color = getComputedStyle(document.documentElement).getPropertyValue("--muted").trim() || "#a7b1bb";
+          cell.style.fontWeight = "700";
+        }
+        row.appendChild(cell);
+      });
+      return row;
+    };
+    frag.appendChild(makeRow(["Letter", "Count", "Percent"], true));
+    for (const L of letters) {
+      const c = counts.get(L) || 0;
+      const pct = totalLetters ? ((c / totalLetters) * 100).toFixed(1) + "%" : "0%";
+      frag.appendChild(makeRow([L, String(c), pct]));
+    }
+    // Also include letters that are in the alphabet but zero count? We'll omit to keep concise.
+    els.freqTable.replaceChildren(frag);
   }
 
   function clearMapping() {
@@ -309,6 +361,13 @@
       state.disallowNonInjective = !!els.injectiveToggle.checked;
       // On enabling, immediately enforce uniqueness across existing mapping
       if (state.disallowNonInjective) enforceInjectivityFor(undefined);
+      updateOutputs();
+    });
+  }
+
+  if (els.freqToggle) {
+    els.freqToggle.addEventListener("change", () => {
+      state.showFrequency = !!els.freqToggle.checked;
       updateOutputs();
     });
   }

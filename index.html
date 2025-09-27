@@ -22,6 +22,10 @@
             <input id="injectiveToggle" type="checkbox">
             disallow non-injective mappings
           </label>
+          <label style="display:inline-flex; align-items:center; gap:6px; margin-left:8px; color: var(--muted); font-weight:600;">
+            <input id="freqToggle" type="checkbox">
+            show letter frequency
+          </label>
         </div>
       </section>
 
@@ -44,6 +48,11 @@
         <div class="row">
           <div class="row-title">letters applied (underscores for unknown)</div>
           <pre id="spacedGuess" class="mono block"></pre>
+        </div>
+
+        <div class="row" id="freqRow" style="display:none;">
+          <div class="row-title">letter frequency (original text)</div>
+          <div id="freqTable" class="block mono"></div>
         </div>
       </section>
     </main>

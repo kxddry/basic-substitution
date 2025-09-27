@@ -84,7 +84,7 @@
     input.className = "plain-input";
     input.type = "text";
     input.maxLength = 1;
-    input.setAttribute("inputmode", "latin");
+    input.setAttribute("inputmode", "text");
     input.setAttribute("autocomplete", "off");
     input.setAttribute("spellcheck", "false");
     input.dataset.key = ch; // cipher letter key
@@ -95,7 +95,7 @@
       const ev = /** @type {InputEvent} */ (e);
       if (ev.inputType === "insertText" && ev.data) {
         const upper = ev.data.toUpperCase();
-        if (!/^[A-Z]$/.test(upper)) {
+        if (!/^[A-ZА-Я]$/.test(upper)) {
           e.preventDefault();
         }
       }
@@ -103,7 +103,7 @@
 
     input.addEventListener("input", (e) => {
       const target = /** @type {HTMLInputElement} */ (e.currentTarget);
-      const val = (target.value || "").toUpperCase().replace(/[^A-Z]/g, "");
+      const val = (target.value || "").toUpperCase().replace(/[^A-ZА-Я]/g, "");
       target.value = val;
 
       const key = target.dataset.key;

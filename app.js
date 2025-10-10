@@ -10,6 +10,7 @@
     decrypted: /** @type {HTMLElement} */ (document.getElementById("decryptedSentence")),
     spaced: /** @type {HTMLElement} */ (document.getElementById("spacedGuess")),
     clearBtn: /** @type {HTMLButtonElement} */ (document.getElementById("clearMapping")),
+    includeSpecialCharsToggle: /** @type {HTMLInputElement} */ (document.getElementById("includeSpecialChars")),
     injectiveToggle: /** @type {HTMLInputElement} */ (document.getElementById("injectiveToggle")),
     freqToggle: /** @type {HTMLInputElement} */ (document.getElementById("freqToggle")),
     freqRow: /** @type {HTMLElement} */ (document.getElementById("freqRow")),
@@ -21,10 +22,20 @@
     mapping: /** @type {Record<string, string>} */ ({}), // cipher letter (A-Z) -> plain letter (A-Z)
     disallowNonInjective: false,
     showFrequency: false,
+    includeSpecialChars: false,
   };
 
   function isLetter(ch) {
     return /^[A-ZА-Я]$/.test(ch);
+  }
+
+  function isProcessableChar(ch) {
+    if (isLetter(ch)) return true;
+    if (state.includeSpecialChars) {
+      // Include digits, spaces, and common punctuation/special chars
+      return /^[0-9\s!@#$%^&*()_+\-=\[\]{};':"\\|,.<>/?`~№]$/.test(ch);
+    }
+    return false;
   }
 
   function normalizeCiphertext(raw) {
@@ -37,11 +48,11 @@
     let out = "";
     for (let i = 0; i < text.length; i += 1) {
       const ch = text[i];
-      if (isLetter(ch)) {
+      if (isProcessableChar(ch)) {
         const mapped = mapping[ch];
-        out += mapped && mapped.length === 1 ? mapped : ch; // show original letter if unmapped
+        out += mapped && mapped.length === 1 ? mapped : ch; // show original if unmapped
       } else {
-        out += ch; // preserve spaces, punctuation, newlines
+        out += ch; // preserve newlines and other chars
       }
     }
     return out;
@@ -67,11 +78,11 @@
     let out = "";
     for (let i = 0; i < text.length; i += 1) {
       const ch = text[i];
-      if (isLetter(ch)) {
+      if (isProcessableChar(ch)) {
         const mapped = mapping[ch];
         out += mapped && mapped.length === 1 ? mapped : "_";
       } else {
-        out += ch; // preserve spaces, punctuation, newlines
+        out += ch; // preserve newlines and other chars
       }
     }
     return out;
@@ -116,7 +127,7 @@
   function updateOutputs() {
     const applied = applyMapping(state.ciphertext, state.mapping);
 
-    // Render decrypted with highlights for mapped letters
+    // Render decrypted with highlights for mapped chars
     const frag = document.createDocumentFragment();
     for (let i = 0; i < state.ciphertext.length; i += 1) {
       const cipherCh = state.ciphertext[i];
@@ -125,7 +136,7 @@
         frag.appendChild(document.createTextNode("\n"));
         continue;
       }
-      if (!isLetter(cipherCh)) {
+      if (!isProcessableChar(cipherCh)) {
         frag.appendChild(document.createTextNode(cipherCh));
         continue;
       }
@@ -155,18 +166,18 @@
   function renderFrequency(text) {
     if (!els.freqTable) return;
     const counts = new Map();
-    let totalLetters = 0;
+    let totalChars = 0;
     for (let i = 0; i < text.length; i += 1) {
       const ch = text[i];
-      if (isLetter(ch)) {
-        totalLetters += 1;
+      if (isProcessableChar(ch)) {
+        totalChars += 1;пш
         counts.set(ch, (counts.get(ch) || 0) + 1);
       }
     }
-    const letters = Array.from(counts.keys()).sort((a, b) => {
+    const chars = Array.from(counts.keys()).sort((a, b) => {
       const cb = counts.get(b) || 0;
       const ca = counts.get(a) || 0;
-      if (cb !== ca) return cb - ca; // descending by count (i.e., percentage)
+      if (cb !== ca) return cb - ca; // descending by count
       return a.localeCompare(b);
     });
     const frag = document.createDocumentFragment();
@@ -180,20 +191,20 @@
         const cell = document.createElement("div");
         cell.textContent = c;
         if (header) {
-          cell.style.color = getComputedStyle(document.documentElement).getPropertyValue("--muted").trim() || "#a7b1bb";
+          cell.style.color = getComputedStyle(document.documentElement).getPropertyValue("--muted").trim() || "#718096";
           cell.style.fontWeight = "700";
         }
         row.appendChild(cell);
       });
       return row;
     };
-    frag.appendChild(makeRow(["Letter", "Count", "Percent"], true));
-    for (const L of letters) {
-      const c = counts.get(L) || 0;
-      const pct = totalLetters ? ((c / totalLetters) * 100).toFixed(1) + "%" : "0%";
-      frag.appendChild(makeRow([L, String(c), pct]));
+    frag.appendChild(makeRow(["Символ", "Кол-во", "Процент"], true));
+    for (const ch of chars) {
+      const c = counts.get(ch) || 0;
+      const pct = totalChars ? ((c / totalChars) * 100).toFixed(1) + "%" : "0%";
+      const displayChar = ch === " " ? "␣" : ch; // use visible space symbol
+      frag.appendChild(makeRow([displayChar, String(c), pct]));
     }
-    // Also include letters that are in the alphabet but zero count? We'll omit to keep concise.
     els.freqTable.replaceChildren(frag);
   }
 
@@ -212,7 +223,7 @@
 
     const top = document.createElement("div");
     top.className = "cipher-char";
-    top.textContent = ch;
+    top.textContent = ch === " " ? "␣" : ch; // Show visible space symbol
 
     const input = document.createElement("input");
     input.className = "plain-input";
@@ -221,7 +232,7 @@
     input.setAttribute("inputmode", "text");
     input.setAttribute("autocomplete", "off");
     input.setAttribute("spellcheck", "false");
-    input.dataset.key = ch; // cipher letter key
+    input.dataset.key = ch; // cipher char key
     input.value = state.mapping[ch] || "";
 
     // Input behavior
@@ -229,7 +240,11 @@
       const ev = /** @type {InputEvent} */ (e);
       if (ev.inputType === "insertText" && ev.data) {
         const upper = ev.data.toUpperCase();
-        if (!/^[A-ZА-Я]$/.test(upper)) {
+        let allowed = /^[A-ZА-Я]$/.test(upper);
+        if (state.includeSpecialChars) {
+          allowed = allowed || /^[0-9\s!@#$%^&*()_+\-=\[\]{};':"\\|,.<>/?`~№]$/.test(ev.data);
+        }
+        if (!allowed) {
           e.preventDefault();
         }
       }
@@ -237,7 +252,20 @@
 
     input.addEventListener("input", (e) => {
       const target = /** @type {HTMLInputElement} */ (e.currentTarget);
-      const val = (target.value || "").toUpperCase().replace(/[^A-ZА-Я]/g, "");
+      let val = target.value || "";
+      
+      // Filter based on whether special chars are enabled
+      if (state.includeSpecialChars) {
+        val = val.replace(/[^A-ZА-Я0-9\s!@#$%^&*()_+\-=\[\]{};':"\\|,.<>/?`~№]/gi, "");
+      } else {
+        val = val.toUpperCase().replace(/[^A-ZА-Я]/g, "");
+      }
+      
+      // For letters, always uppercase
+      if (/^[A-ZА-Я]$/i.test(val)) {
+        val = val.toUpperCase();
+      }
+      
       target.value = val;
 
       const key = target.dataset.key;
@@ -248,14 +276,14 @@
       // If injectivity is required, clear conflicts, preferring the key just set
       enforceInjectivityFor(key);
 
-      // Sync all inputs for the same cipher letter
+      // Sync all inputs for the same cipher char
       els.grid.querySelectorAll(`input.plain-input[data-key="${key}"]`).forEach((inp) => {
         if (inp !== target) inp.value = val;
       });
 
       updateOutputs();
 
-      // Move to next input if a letter was typed
+      // Move to next input if a char was typed
       if (val.length === 1) {
         const inputs = Array.from(els.grid.querySelectorAll("input.plain-input"));
         const idx = inputs.indexOf(target);
@@ -322,11 +350,12 @@
 
       for (let i = 0; i < lineText.length; i += 1) {
         const ch = lineText[i];
-        if (isLetter(ch)) {
+        if (isProcessableChar(ch)) {
           lineEl.appendChild(createLetterTile(ch, i));
-        } else if (ch === " ") {
+        } else if (ch === " " && !state.includeSpecialChars) {
+          // Only show blank tiles for spaces when special chars are disabled
           lineEl.appendChild(createBlankTile(true));
-        } else {
+        } else if (!state.includeSpecialChars) {
           const tile = createBlankTile(false);
           tile.querySelector(".cipher-char").textContent = ch;
           lineEl.appendChild(tile);
@@ -360,6 +389,16 @@
   els.clearBtn.addEventListener("click", () => {
     clearMapping();
   });
+
+  if (els.includeSpecialCharsToggle) {
+    els.includeSpecialCharsToggle.addEventListener("change", () => {
+      state.includeSpecialChars = !!els.includeSpecialCharsToggle.checked;
+      // Clear mapping and rebuild grid when toggling special chars
+      clearMapping();
+      rebuildGrid();
+      updateOutputs();
+    });
+  }
 
   if (els.injectiveToggle) {
     els.injectiveToggle.addEventListener("change", () => {

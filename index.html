@@ -9,49 +9,53 @@
   <body>
     <main class="app">
       <header class="header">
-        <h1>Basic Substitution Decryptor</h1>
-        <p class="sub">Type or paste your ciphertext, then enter guesses under each letter.</p>
+        <h1>🔓 Дешифратор</h1>
+        <p class="sub">Введите зашифрованный текст и сопоставьте буквы для расшифровки</p>
       </header>
 
       <section class="input-section">
-        <label for="ciphertext" class="label">Ciphertext</label>
-        <textarea id="ciphertext" class="ciphertext" rows="4" placeholder="Example: HELLO WORLD"></textarea>
+        <label for="ciphertext" class="label">Зашифрованный текст</label>
+        <textarea id="ciphertext" class="ciphertext" rows="4" placeholder="Например: ПРИВЕТ МИР"></textarea>
         <div class="controls">
-          <button id="clearMapping" type="button" class="btn">Clear mapping</button>
-          <label style="display:inline-flex; align-items:center; gap:6px; margin-left:8px; color: var(--muted); font-weight:600;">
-            <input id="injectiveToggle" type="checkbox">
-            disallow non-injective mappings
+          <button id="clearMapping" type="button" class="btn">Очистить</button>
+          <label>
+            <input id="includeSpecialChars" type="checkbox">
+            Включить цифры и символы
           </label>
-          <label style="display:inline-flex; align-items:center; gap:6px; margin-left:8px; color: var(--muted); font-weight:600;">
+          <label>
+            <input id="injectiveToggle" type="checkbox">
+            Уникальные замены
+          </label>
+          <label>
             <input id="freqToggle" type="checkbox">
-            show letter frequency
+            Показать частоту
           </label>
         </div>
       </section>
 
       <section class="display-section">
         <div class="row">
-          <div class="row-title">original sentence</div>
+          <div class="row-title">Исходный текст</div>
           <pre id="originalDisplay" class="mono block"></pre>
         </div>
 
         <div class="row">
-          <div class="row-title">enter letters under each character</div>
+          <div class="row-title">Введите соответствия</div>
           <div id="grid" class="grid" aria-live="polite" aria-label="Per-character entry grid"></div>
         </div>
 
         <div class="row">
-          <div class="row-title">sentence with current letters applied</div>
+          <div class="row-title">Расшифрованный текст</div>
           <pre id="decryptedSentence" class="mono block"></pre>
         </div>
 
         <div class="row">
-          <div class="row-title">letters applied (underscores for unknown)</div>
+          <div class="row-title">Подстановки (_ = неизвестно)</div>
           <pre id="spacedGuess" class="mono block"></pre>
         </div>
 
         <div class="row" id="freqRow" style="display:none;">
-          <div class="row-title">letter frequency (original text)</div>
+          <div class="row-title">Частота символов</div>
           <div id="freqTable" class="block mono"></div>
         </div>
       </section>

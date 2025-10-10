@@ -170,7 +170,7 @@
     for (let i = 0; i < text.length; i += 1) {
       const ch = text[i];
       if (isProcessableChar(ch)) {
-        totalChars += 1;пш
+        totalChars += 1;
         counts.set(ch, (counts.get(ch) || 0) + 1);
       }
     }

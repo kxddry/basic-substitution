@@ -348,17 +348,30 @@
       const lineEl = document.createElement("div");
       lineEl.className = "line";
 
+      // Group characters into words to prevent word breaking
+      let currentWord = null;
+      
       for (let i = 0; i < lineText.length; i += 1) {
         const ch = lineText[i];
+        const isSpace = ch === " ";
+        
+        // Start new word group if needed
+        if (!currentWord || (isSpace && !state.includeSpecialChars)) {
+          currentWord = document.createElement("div");
+          currentWord.className = "word-group";
+          lineEl.appendChild(currentWord);
+        }
+        
         if (isProcessableChar(ch)) {
-          lineEl.appendChild(createLetterTile(ch, i));
-        } else if (ch === " " && !state.includeSpecialChars) {
-          // Only show blank tiles for spaces when special chars are disabled
-          lineEl.appendChild(createBlankTile(true));
+          currentWord.appendChild(createLetterTile(ch, i));
+        } else if (isSpace && !state.includeSpecialChars) {
+          // Spaces create word boundaries
+          currentWord.appendChild(createBlankTile(true));
+          currentWord = null; // Force new word group after space
         } else if (!state.includeSpecialChars) {
           const tile = createBlankTile(false);
           tile.querySelector(".cipher-char").textContent = ch;
-          lineEl.appendChild(tile);
+          currentWord.appendChild(tile);
         }
       }
 

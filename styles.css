@@ -169,6 +169,12 @@ body {
 .line {
   display: flex;
   gap: 6px;
+  flex-wrap: wrap;
+}
+
+.word-group {
+  display: flex;
+  gap: 6px;
   flex-wrap: nowrap;
 }
 
